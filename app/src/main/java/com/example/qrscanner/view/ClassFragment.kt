@@ -44,18 +44,18 @@ class ClassFragment : Fragment() {
 
 
     private fun getData(){
+
         lifecycleScope.launchWhenCreated {
             val apiService: ApiService = ApiClient.getRetrofit().create()
             val  listClass=apiService.classList("class",
                 arguments?.getString("course_id").toString()).body()?.list
             val adapter= AdapterClassList(listClass,requireContext())
             binding.recyclerViewClass.adapter=adapter
+            binding.classProgress.visibility = View.GONE
             if (listClass?.size==0)
                 binding.collapsingClass.title= "درسی موجود نیست"
             else
                 binding.collapsingClass.title= arguments?.getString("course_name")
-            Log.i("TAG", "getData: ${adapter.context}")
-            Log.i("TAG", "${listClass?.size} : ")
             viewModelFactory {
                 coroutineScope {
                     kotlinx.coroutines.DisposableHandle {

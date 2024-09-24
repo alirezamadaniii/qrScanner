@@ -35,7 +35,7 @@ class QrFragment : Fragment() {
 
     private lateinit var _binding : FragmentQrBinding
     private lateinit var codeScanner: CodeScanner
-    private lateinit var nationalCode:String
+    private lateinit var nationalCode: String
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
         savedInstanceState: Bundle?
@@ -65,9 +65,7 @@ class QrFragment : Fragment() {
 
             decodeCallback = DecodeCallback {
                 requireActivity().runOnUiThread{
-                    Log.i("TAG", "codeScanner: ${it.text}")
                     if (it.text.isNotEmpty()){
-                        Log.i("TAG", "codeScanner: ${it.text}")
                         val dialog= Dialog(requireContext())
                         dialog.setContentView(R.layout.dialog_status)
                         dialog.window?.setBackgroundDrawable(ColorDrawable(Color.TRANSPARENT))
@@ -76,25 +74,26 @@ class QrFragment : Fragment() {
                         codeScanner.stopPreview()
                         val textResultDialog=dialog.findViewById<TextView>(R.id.textViewDialog)
                         dialog.findViewById<Button>(R.id.buttonBacktoScanner)
-                            .setOnClickListener(){
-
+                            .setOnClickListener{
                                 dialog.cancel()
                                 dialog.dismiss()
                                 codeScanner.startPreview()
                         }
 
-                        nationalCode=it.text.toString().substring(48,it.text.lastIndexOf("'"))
-                        Log.i("TAG", "codeScanner: $nationalCode")
+                        try {
+                            nationalCode=it.text.toString().substring(48,it.text.lastIndexOf("'"))
+                            val apiService: ApiService by lazy {
+                                ApiClient.getRetrofit().create()
+                            }
 
-
-                        val apiService: ApiService by lazy {
-                            ApiClient.getRetrofit().create()
+                            lifecycleScope.launchWhenCreated {
+                                textResultDialog.text=apiService.responseUser(nationalCode,getDataUser())
+                                    .body()?.result
+                            }
+                        }catch (e:StringIndexOutOfBoundsException){
+                            textResultDialog.text="کارت نامعتبر است!"
                         }
 
-                        lifecycleScope.launchWhenCreated {
-                            textResultDialog.text=apiService.responseUser(nationalCode,getDataUser())
-                                .body()?.result
-                        }
                     }
                 }
             }

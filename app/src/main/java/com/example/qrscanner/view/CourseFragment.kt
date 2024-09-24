@@ -51,11 +51,13 @@ class CourseFragment : Fragment() {
     }
 
     private fun getData(userId : String){
+
         lifecycleScope.launchWhenCreated {
             val apiService:ApiService=ApiClient.getRetrofit().create()
             val adapter=AdapterCourseList(apiService.courseList("course",
                 userId).body()?.list,requireContext())
             binding.recyclerView.adapter=adapter
+            binding.courseProgress.visibility =View.GONE
         }
     }
 
@@ -69,7 +71,6 @@ class CourseFragment : Fragment() {
         view!!.requestFocus()
         view!!.setOnKeyListener { v: View?, keyCode: Int, event: KeyEvent ->
             if (event.action == KeyEvent.ACTION_UP && keyCode == KeyEvent.KEYCODE_BACK) {
-//                    Toast.makeText(getContext(), "back pressed", Toast.LENGTH_SHORT).show();
                 return@setOnKeyListener true
             }
             false
