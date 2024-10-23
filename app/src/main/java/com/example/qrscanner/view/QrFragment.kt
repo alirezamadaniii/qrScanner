@@ -36,6 +36,8 @@ class QrFragment : Fragment() {
     private lateinit var _binding : FragmentQrBinding
     private lateinit var codeScanner: CodeScanner
     private lateinit var nationalCode: String
+    private lateinit var dialog: Dialog
+    private lateinit var textResultDialog: TextView
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
         savedInstanceState: Bundle?
@@ -63,32 +65,42 @@ class QrFragment : Fragment() {
             isAutoFocusEnabled=true
             isFlashEnabled=false
 
+            dialog= Dialog(requireContext())
+
+
             decodeCallback = DecodeCallback {
                 requireActivity().runOnUiThread{
+                    Log.i("TAG", "codeScanner: $it")
                     if (it.text.isNotEmpty()){
-                        val dialog= Dialog(requireContext())
-                        dialog.setContentView(R.layout.dialog_status)
-                        dialog.window?.setBackgroundDrawable(ColorDrawable(Color.TRANSPARENT))
-                        dialog.window?.setLayout(_binding.root.width,_binding.root.height)
-                        dialog.show()
-                        codeScanner.stopPreview()
-                        val textResultDialog=dialog.findViewById<TextView>(R.id.textViewDialog)
-                        dialog.findViewById<Button>(R.id.buttonBacktoScanner)
-                            .setOnClickListener{
-                                dialog.cancel()
-                                dialog.dismiss()
-                                codeScanner.startPreview()
-                        }
+
 
                         try {
-                            nationalCode=it.text.toString().substring(48,it.text.lastIndexOf("'"))
+                            nationalCode=it.text.toString().substring(47,it.text.lastIndexOf("'"))
+                            Log.i("TAG", "codeScanner: $nationalCode")
                             val apiService: ApiService by lazy {
                                 ApiClient.getRetrofit().create()
                             }
 
                             lifecycleScope.launchWhenCreated {
+                                _binding.progressBar.visibility = View.VISIBLE
+
+                                dialog.setContentView(R.layout.dialog_status)
+                                dialog.window?.setBackgroundDrawable(ColorDrawable(Color.TRANSPARENT))
+                                dialog.window?.setLayout(_binding.root.width,_binding.root.height)
+                                codeScanner.stopPreview()
+
+                                textResultDialog=dialog.findViewById(R.id.textViewDialog)
+                                dialog.findViewById<Button>(R.id.buttonBacktoScanner)
+                                    .setOnClickListener{
+                                        dialog.cancel()
+                                        dialog.dismiss()
+                                        codeScanner.startPreview()
+                                    }
                                 textResultDialog.text=apiService.responseUser(nationalCode,getDataUser())
                                     .body()?.result
+                                _binding.progressBar.visibility = View.GONE
+
+                                dialog.show()
                             }
                         }catch (e:StringIndexOutOfBoundsException){
                             textResultDialog.text="کارت نامعتبر است!"
